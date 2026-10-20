@@ -93,7 +93,8 @@ module.exports = function (router) {
         var user = await utils.findOne(User, req.params.id, {}, 'User');
         await user.deleteOne();
         await Task.updateMany({ assignedUser: String(user._id) }, { assignedUser: '', assignedUserName: 'unassigned' });
-        utils.send(res, 200, 'User deleted', user);
+        // 204 No Content: success with an empty body
+        res.status(204).end();
     });
 
     return router;

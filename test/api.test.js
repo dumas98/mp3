@@ -22,8 +22,11 @@ async function api(method, url, body) {
         headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
         body: body === undefined ? undefined : JSON.stringify(body)
     });
-    const json = res.status === 204 ? null : await res.json();
-    if (json) {
+    const text = await res.text();
+    const json = text === '' ? null : JSON.parse(text);
+    if (res.status === 204) {
+        assert.equal(text, '', `${method} ${url}: a 204 should have an empty body`);
+    } else {
         assert.equal(typeof json.message, 'string', `${method} ${url}: message should be a string`);
         assert.ok('data' in json, `${method} ${url}: response should have data`);
     }
@@ -316,7 +319,7 @@ describe('deleting', () => {
     it('DELETE /tasks removes the task from its user', async () => {
         const user = await makeUser();
         const task = await makeTask({ assignedUser: user._id });
-        assert.equal((await api('DELETE', `/tasks/${task._id}`)).status, 200);
+        assert.equal((await api('DELETE', `/tasks/${task._id}`)).status, 204);
         assert.equal((await api('GET', `/tasks/${task._id}`)).status, 404);
         assert.deepEqual((await getUser(user._id)).pendingTasks, []);
         assert.equal((await api('DELETE', `/tasks/${task._id}`)).status, 404);
@@ -326,7 +329,7 @@ describe('deleting', () => {
         const user = await makeUser();
         const pending = await makeTask({ assignedUser: user._id });
         const done = await makeTask({ assignedUser: user._id, completed: true });
-        assert.equal((await api('DELETE', `/users/${user._id}`)).status, 200);
+        assert.equal((await api('DELETE', `/users/${user._id}`)).status, 204);
         assert.equal((await api('GET', `/users/${user._id}`)).status, 404);
         for (const id of [pending._id, done._id]) {
             const task = await getTask(id);

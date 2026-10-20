@@ -90,7 +90,8 @@ module.exports = function (router) {
         var task = await utils.findOne(Task, req.params.id, {}, 'Task');
         await task.deleteOne();
         await User.updateMany({ pendingTasks: String(task._id) }, { $pull: { pendingTasks: String(task._id) } });
-        utils.send(res, 200, 'Task deleted', task);
+        // 204 No Content: success with an empty body
+        res.status(204).end();
     });
 
     return router;
